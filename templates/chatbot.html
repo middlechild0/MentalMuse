@@ -1,0 +1,150 @@
+{% extends 'base.html' %} 
+{% block styles %} 
+<style>
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .gradient-bg {
+        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+    }
+    
+    .message-bubble {
+        position: relative;
+        border-radius: 1rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        max-width: 80%;
+    }
+    
+    .message-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        width: 0;
+        height: 0;
+        border: 10px solid transparent;
+    }
+    
+    .user-message {
+        background-color: #4F46E5;
+        color: white;
+        margin-left: auto;
+    }
+    
+    .assistant-message {
+        background-color: #818CF8;
+        color: white;
+        margin-right: auto; /* Ensures the assistant message is aligned to the left */
+    }
+    
+    .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .typing-dot {
+        width: 4px;
+        height: 4px;
+        background-color: #fff;
+        border-radius: 50%;
+        animation: typing 1s infinite;
+    }
+    
+    @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+</style>
+</head>
+<body class="h-screen bg-gray-100">
+    <div class="container mx-auto h-full flex flex-col p-4">
+        <!-- Header -->
+        <div class="gradient-bg text-white p-6 rounded-t-lg shadow-lg">
+            <h1 class="text-3xl font-bold mb-2">Mental Muse</h1>
+            <p class="text-lg opacity-90">Your Compassionate AI Mental Health Assistant</p>
+            
+            <!-- Auth buttons -->
+            <div class="flex gap-4 mt-4">
+                {% if user.is_authenticated %}
+                    <span class="text-white">Welcome, {{user.username}}</span>
+                    <a href="logout" class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full hover:bg-yellow-300 transition-colors">Logout</a>
+                {% else %}
+                    <a href="login" class="bg-white text-purple-600 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors">Login</a>
+                    <a href="register" class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full hover:bg-yellow-300 transition-colors">Register</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Chat container -->
+        <div class="flex-grow bg-white rounded-b-lg shadow-lg overflow-hidden flex flex-col">
+            <!-- Messages area -->
+            <div class="flex-grow p-4 overflow-y-auto space-y-4" id="messages-container">
+                <!-- Welcome message -->
+                <div class="assistant-message message-bubble">
+                    <div class="font-bold mb-1">Mental Muse</div>
+                    <p>Hello! I'm your Mental Muse, a compassionate AI assistant here to support your mental well-being. How are you feeling today?</p>
+                </div>
+
+                <!-- Dynamic messages -->
+                {% for chat in chats %}
+                    <div class="user-message message-bubble">
+                        <div class="font-bold mb-1">You</div>
+                        <p>{{chat.message}}</p>
+                    </div>
+                    <div class="assistant-message message-bubble">
+                        <div class="font-bold mb-1">Mental Muse</div>
+                        <p>{{chat.response}}</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Input area -->
+            <div class="border-t p-4">
+                <form class="flex gap-4" method="post">
+                    {% csrf_token %}
+                    <input type="text" 
+                           name="message" 
+                           class="flex-grow p-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="Type your message here..."
+                           required>
+                    <button type="submit" 
+                            class="gradient-bg text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity">
+                        Send
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Scroll to bottom of messages
+        const messagesContainer = document.getElementById('messages-container');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Add typing indicator
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'assistant-message message-bubble';
+            indicator.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot" style="animation-delay: 0.2s"></div>
+                    <div class="typing-dot" style="animation-delay: 0.4s"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(indicator);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Form submission with typing indicator
+        document.querySelector('form').addEventListener('submit', function(e) {
+            showTypingIndicator();
+        });
+    </script>
+{% endblock %}
